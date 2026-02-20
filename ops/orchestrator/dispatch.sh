@@ -65,6 +65,9 @@ run_one_runner() {
 	if [[ "$worktree" != /* ]]; then
 		worktree="$DOCKYARD_ROOT/$worktree"
 	fi
+	[[ -d "$worktree" ]] || die "Missing worktree: $worktree"
+
+	ensure_claude_settings_for_dir "$worktree"
 
 	local run_dir="$job_dir/runs/$rid"
 	ensure_dir "$run_dir"

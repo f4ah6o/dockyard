@@ -24,7 +24,7 @@ teardown() {
 }
 
 @test "orchestrate --once creates core artifacts in mock mode" {
-	run env DOCKYARD_MOCK_LLM=1 ./dock orchestrate --once --repo demo --runners 1
+	run env DOCKYARD_MOCK_LLM=1 ZAI_API_KEY=dummy-key ./dock orchestrate --once --repo demo --runners 1
 	[ "$status" -eq 0 ]
 
 	latest_job="$(ls -1 out/demo | sort | tail -n 1)"
@@ -34,4 +34,7 @@ teardown() {
 	[ -f "out/demo/$latest_job/review.yaml" ]
 	[ -f "out/demo/$latest_job/decision.yaml" ]
 	[ -f "out/demo/$latest_job/artifacts/diff.patch" ]
+	[ -f "worktrees/demo/run-1/.claude/settings.json" ]
+	[ "$(yq e -r '.env.ANTHROPIC_AUTH_TOKEN' worktrees/demo/run-1/.claude/settings.json)" = "dummy-key" ]
+	[ "$(yq e -r '.env.ANTHROPIC_BASE_URL' worktrees/demo/run-1/.claude/settings.json)" = "https://api.z.ai/api/anthropic" ]
 }

@@ -10,6 +10,7 @@ tmux-based multi-agent CLI orchestration with SSOT (`state/session.yaml`) and st
 - flock (util-linux)
 - timeout (GNU `timeout` or `gtimeout`)
 - tmux (for `dock up`, optional for headless orchestrate)
+- `ZAI_API_KEY` environment variable (when using Claude Code via z.ai)
 
 Optional (tests/CI):
 
@@ -60,6 +61,24 @@ cp state/session.yaml.example state/session.yaml
 - `dock clean --repo <repo> [--dry-run]`
 - `dock archive --repo <repo> [--job <job_id>]`
 - `dock send <role> "<command>"`
+
+## Claude Code + z.ai
+
+If runners use `claude`/`claude -p`, set your z.ai key in the shell:
+
+```bash
+export ZAI_API_KEY="<your_zai_api_key>"
+```
+
+During `dispatch`, dockyard automatically creates or updates:
+
+- `worktrees/<repo>/run-*/.claude/settings.json`
+
+and merges these keys into `.env`:
+
+- `ANTHROPIC_AUTH_TOKEN` (from `ZAI_API_KEY`)
+- `ANTHROPIC_BASE_URL` (`https://api.z.ai/api/anthropic`)
+- `API_TIMEOUT_MS` (`3000000` by default, or current `API_TIMEOUT_MS` env value)
 
 ## Mock mode
 

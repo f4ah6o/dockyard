@@ -170,6 +170,39 @@ run_cmd_with_timeout() {
 	"$timeout_cmd" "$timeout_seconds" "$@"
 }
 
+ensure_claude_settings_for_dir() {
+	local target_dir="$1"
+	[[ -n "$target_dir" ]] || die "Missing target directory for Claude settings"
+	[[ -d "$target_dir" ]] || die "Missing target directory: $target_dir"
+	[[ -n "${ZAI_API_KEY:-}" ]] || die "Missing required env var: ZAI_API_KEY"
+
+	local claude_dir="$target_dir/.claude"
+	local settings_file="$claude_dir/settings.json"
+	ensure_dir "$claude_dir"
+
+	if [[ ! -f "$settings_file" ]]; then
+		printf '{}\n' >"$settings_file"
+	fi
+
+	yq e '.' "$settings_file" >/dev/null 2>&1 || die "Invalid JSON/YAML: $settings_file"
+
+	local tmp_file
+	tmp_file="$(mktemp)"
+	if ! ZAI_KEY="$ZAI_API_KEY" \
+		ZAI_BASE_URL="https://api.z.ai/api/anthropic" \
+		API_TIMEOUT_VALUE="${API_TIMEOUT_MS:-3000000}" \
+		yq -o=json '. = (. // {}) |
+      .env = (.env // {}) |
+      .env.ANTHROPIC_AUTH_TOKEN = strenv(ZAI_KEY) |
+      .env.ANTHROPIC_BASE_URL = strenv(ZAI_BASE_URL) |
+      .env.API_TIMEOUT_MS = strenv(API_TIMEOUT_VALUE)' "$settings_file" >"$tmp_file"; then
+		rm -f "$tmp_file"
+		die "Failed to render Claude settings JSON: $settings_file"
+	fi
+
+	mv "$tmp_file" "$settings_file"
+}
+
 mtime_epoch() {
 	local path="$1"
 	if stat -f %m "$path" >/dev/null 2>&1; then
