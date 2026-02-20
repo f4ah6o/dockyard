@@ -1,0 +1,58 @@
+current_repo: target-repo
+
+phase: PLAN
+updated_at: 2026-02-20T00:00:00Z
+last_job_id: ""
+
+goal: |
+  テスト失敗を解消し、CIが通る状態に戻す
+
+constraints:
+  - 作業repoにログやパッチを残さない（out/へ）
+  - 勝手に push しない
+  - baseline repos/<repo> は触らない（worktreesで作業）
+  - 変更は runner branch で行う
+
+acceptance:
+  - 全テストPASS
+  - lintエラーなし
+  - diffに不要変更なし
+
+next_actions:
+  - 調査
+  - 修正
+  - 再テスト
+
+runtime:
+  timeout_seconds:
+    runner: 900
+    strategist: 300
+    reviewer: 300
+    decide: 180
+  max_retries:
+    runner: 1
+    strategist: 1
+    reviewer: 0
+    decide: 1
+  fail_policy: WAIT_HUMAN
+  required_artifacts:
+    - plan.yaml
+    - review.yaml
+    - artifacts/diff.patch
+
+retention:
+  keep_jobs: 50
+  archive_after_days: 14
+  delete_after_days: 90
+
+worktrees:
+  keep_after_done: true
+  prune_after_days: 30
+
+models:
+  orch_decide: "claude -p"
+  strategist: "gemini -p"
+  reviewer: "gemini -p"
+  runner_default: "claude -p"
+
+retries: {}

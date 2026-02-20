@@ -1,0 +1,11 @@
+config/agents.env
+state/session.yaml
+state/session.lock
+repos/
+worktrees/
+out/
+archive/
+journal/*.md
+!journal/.gitkeep
+*.swp
+.DS_Store

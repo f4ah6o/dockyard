@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$ROOT_DIR/ops/lib/common.sh"
+
+usage() {
+	cat <<USAGE
+Usage:
+  dock clone <git-url>
+  dock up <repo> [--runners N] [--attach stateless|resident|none]
+  dock orchestrate --once|--loop [--repo <repo>] [--runners N] [--interval seconds]
+  dock status [--repo <repo>]
+  dock journal [--repo <repo>] [--message "..."]
+  dock clean --repo <repo> [--dry-run]
+  dock archive --repo <repo> [--job <job_id>]
+  dock send <role> "<command>"
+USAGE
+}
+
+cmd="${1:-}"
+if [[ -z "$cmd" ]]; then
+	usage
+	exit 1
+fi
+shift || true
+
+case "$cmd" in
+clone)
+	exec "$ROOT_DIR/ops/work/clone.sh" "$@"
+	;;
+up)
+	exec "$ROOT_DIR/ops/tmux/up.sh" "$@"
+	;;
+orchestrate)
+	exec "$ROOT_DIR/ops/orchestrator/orchestrate.sh" "$@"
+	;;
+status)
+	"$ROOT_DIR/ops/progress/render-status.sh" "$@"
+	cat "$ROOT_DIR/STATUS.md"
+	;;
+journal)
+	exec "$ROOT_DIR/ops/progress/append-journal.sh" "$@"
+	;;
+clean)
+	exec "$ROOT_DIR/ops/retention/clean.sh" "$@"
+	;;
+archive)
+	exec "$ROOT_DIR/ops/retention/archive.sh" "$@"
+	;;
+send)
+	exec "$ROOT_DIR/ops/tmux/send.sh" "$@"
+	;;
+-h | --help | help)
+	usage
+	;;
+*)
+	echo "Unknown command: $cmd" >&2
+	usage
+	exit 1
+	;;
+esac

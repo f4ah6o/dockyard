@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats shellcheck shfmt
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: shfmt check
+        run: |
+          shfmt -d dock $(find ops -type f -name '*.sh') $(find test -type f -name '*.bats')
+
+      - name: shellcheck
+        run: |
+          shellcheck -x -P SCRIPTDIR dock
+          find ops -type f -name '*.sh' -print0 | xargs -0 shellcheck -x -P SCRIPTDIR
+
+      - name: bats
+        run: |
+          bats test
